@@ -1,5 +1,5 @@
 const tokenName = "woaixiaobai1314";
-module.exports = {
+export default {
   /*
   login(email, pass, cb) {
     cb = arguments[arguments.length - 1]

@@ -1,23 +1,19 @@
 // We only need to import the modules necessary for initial render
 import CoreLayout from '../layouts/CoreLayout'
-import LogIn from './LogIn'
-import Home from './Home'
-import App from './App'
+import LogInRoute from './LogIn'
+import HomeRoute from './Home'
 import CounterRoute from './Counter'
 
 /*  Note: Instead of using JSX, we recommend using react-router
     PlainRoute objects to build route definitions.   */
 
-const HomeView = Home.component;
-
 export const createRoutes = (store) => ({
   path        : '/',
   component   : CoreLayout,
-  indexRoute  : App,
+  indexRoute  : HomeRoute(store),
   childRoutes : [
-    LogIn(store),
-    CounterRoute(store),
-    App
+    LogInRoute(store),
+    CounterRoute(store)
   ]
 })
 

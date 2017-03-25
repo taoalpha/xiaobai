@@ -1,34 +1,41 @@
 import { connect } from 'react-redux'
-import { Redirect } from 'react-router'
-import { increment, doubleAsync } from '../modules/home'
+import { toggleMore, selectIt, nextWord, prevWord } from '../modules/home'
 
 /*  This is a container component. Notice it does not contain any JSX,
     nor does it import React. This component is **only** responsible for
     wiring in the actions and state necessary to render a presentational
-    component - in this case, the counter:   */
+    component - in this case, the LogIn:   */
 
-import Home from '../components/Home'
+import WordCardView from '../components/WordCardView'
 
 /*  Object of action creators (can also be function that returns object).
     Keys will be passed as props to presentational components. Here we are
     implementing our wrapper around increment; the component doesn't care   */
 
 const mapDispatchToProps = {
-  increment : () => increment(1),
-  doubleAsync
+    toggleMore,
+    selectIt,
+    nextWord,
+    prevWord
 }
 
 const mapStateToProps = (state) => ({
-  home : state.home
+  word: state.home.word,
+  color: "blue",
+  sentences: state.home.sentences,
+  showMoreSentences: state.home.showMoreSentences,
+  selectedChoice: state.home.selectedChoice,
+  choices: state.home.choices,
+  answer: state.home.answer,
 })
 
 /*  Note: mapStateToProps is where you should use `reselect` to create selectors, ie:
 
     import { createSelector } from 'reselect'
-    const counter = (state) => state.counter
-    const tripleCount = createSelector(counter, (count) => count * 3)
+    const secretKey = (state) => state.secretKey
+    const tripleCount = createSelector(login, (count) => count * 3)
     const mapStateToProps = (state) => ({
-      counter: tripleCount(state)
+      login: tripleCount(state)
     })
 
     Selectors can compute derived data, allowing Redux to store the minimal possible state.
@@ -36,4 +43,4 @@ const mapStateToProps = (state) => ({
     Selectors are composable. They can be used as input to other selectors.
     https://github.com/reactjs/reselect    */
 
-export default connect(mapStateToProps, mapDispatchToProps)(Home)
+export default connect(mapStateToProps, mapDispatchToProps)(WordCardView)

@@ -1,5 +1,5 @@
-import auth from "modules/auth"
 import { browserHistory } from 'react-router'
+import auth from "modules/auth"
 
 // ------------------------------------
 // Constants
