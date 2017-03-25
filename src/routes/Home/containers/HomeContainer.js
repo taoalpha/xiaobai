@@ -1,5 +1,6 @@
 import { connect } from 'react-redux'
 import { toggleMore, selectIt, nextWord, prevWord } from '../modules/home'
+import randomColor from 'random-material-color'
 
 /*  This is a container component. Notice it does not contain any JSX,
     nor does it import React. This component is **only** responsible for
@@ -21,7 +22,7 @@ const mapDispatchToProps = {
 
 const mapStateToProps = (state) => ({
   word: state.home.word,
-  color: "blue",
+  color: randomColor.getColor(),
   sentences: state.home.sentences,
   showMoreSentences: state.home.showMoreSentences,
   selectedChoice: state.home.selectedChoice,
