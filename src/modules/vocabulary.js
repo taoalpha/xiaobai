@@ -1,38 +1,53 @@
 export let CURRENT_WORD = {};
+export const LOCALWORD_STORAGE_KEY = "XIAOBAIYAOBEIDANCI"
 
-export default {
-  init() {
+/**
+ * dataStore structure:
+ *  1. use DoubleLinkedList - similar with LRU cache to mimick forgetting curve
+ *  2. for single node: {word: word_def, next: node, prev: node, status: [new, fail, raw, rare, medium, done]}
+ *  3. word_def: {word, sentences, choices}
+ * 
+ * data work flow:
+ *  1. init:
+ *    - fetch a batch (50) from server
+ *    - re-organize to a DoubleLinkedList
+ *  2. mark:
+ *    - if true: level up its status, mark current timestamp
+ *    - if false: level down its status, move 
+ */
+
+const Vocabulary = {
+  init(cb) {
     // fetch a bunch
     // return one word to start (words[0])
-    CURRENT_WORD = {
-      word: "pejorative",
-      sentences: [
-        "After Reagan, the word “liberal” became a pejorative.",
-        "Elsewhere, it seems elitist; exclusive in its most pejorative sense.",
-        "He views the term as pejorative, and he is notably skeptical about the value of psychiatric diagnosis in voice-hearing cases:"
-      ],
-      choices: [
-        {word: "opacity", def: "the quality of being opaque to a degree; the degree to which something reduces the passage of light"},
-        {word: "notably", def: "especially; in particular"},
-        {word: "tofu", def: "cheeselike food made of curdled soybean milk"},
-        {word: "pejorative", def: "expressing disapproval"}
-      ]
+    const localWordData = localStorage.getItem(LOCALWORD_STORAGE_KEY);
+    try {
+      Vocabulary.generateList(JSON.parse(localWordData), cb);
+    } catch (e) {
+      pretendRequest(words => {
+        Vocabulary.generateList(words, cb);
+      });
     }
-    return CURRENT_WORD;
+  },
+
+  generateList(words, cb) {
+    CURRENT_WORD = words[0];
+    if (cb) cb(CURRENT_WORD)
   },
   
   curWord() {
     return CURRENT_WORD;
   },
 
-  markWrong(word) {
-    // mark word as wrong
+  mark(word, right) {
+    // mark word as wrong or correct
+    if (right) {
+
+    } else {
+
+    }
   },
   
-  markCorrect(word) {
-    // mark word as correct
-  },
-
   markLearned(word) {
     // mark word as learned
   },
@@ -84,15 +99,25 @@ export default {
   }
 }
 
-function pretendRequest(secretKey, cb) {
+function pretendRequest(cb) {
   setTimeout(() => {
-    if (secretKey === 'xiaobao') {
-      cb({
-        authenticated: true,
-        token: Math.random().toString(36).substring(7)
-      })
-    } else {
-      cb({ authenticated: false })
-    }
-  }, 0)
+    cb([
+      {
+        word: "pejorative",
+        sentences: [
+          "After Reagan, the word “liberal” became a pejorative.",
+          "Elsewhere, it seems elitist; exclusive in its most pejorative sense.",
+          "He views the term as pejorative, and he is notably skeptical about the value of psychiatric diagnosis in voice-hearing cases:"
+        ],
+        choices: [
+          {word: "opacity", def: "the quality of being opaque to a degree; the degree to which something reduces the passage of light"},
+          {word: "notably", def: "especially; in particular"},
+          {word: "tofu", def: "cheeselike food made of curdled soybean milk"},
+          {word: "pejorative", def: "expressing disapproval"}
+        ]
+      }
+    ])
+  }, 3000)
 }
+
+export default Vocabulary

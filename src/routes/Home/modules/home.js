@@ -13,6 +13,20 @@ export const RIGHT_OR_WRONG = 'RIGHT_OR_WRONG'
 // ------------------------------------
 // Actions
 // ------------------------------------
+export const loadInitial = () => {
+  return (dispatch) => {
+    return new Promise((resolve) => {
+      vocabulary.init(word => {
+        dispatch({
+          type    : WORD_CHNAGE,
+          payload : word 
+        })
+        resolve()
+      })
+    })
+  }
+}
+
 export const nextWord = (e) => {
   e.preventDefault();
   return (dispatch) => {
@@ -50,13 +64,15 @@ export const toggleMore = () => {
 }
 
 export const selectIt = (word) => {
-  return (dispatch) => {
+  return (dispatch, getState) => {
+    if (getState().home.selectedChoice) return; // can only select once
+
     // update selected
     dispatch({
       type    : SELECT_CHOICE,
-      payload : word 
+      payload : word
     })
-    
+
     let answer = vocabulary.curWord().word;
 
     dispatch({
@@ -85,7 +101,8 @@ export const actions = {
   nextWord,
   prevWord,
   selectIt,
-  toggleMore
+  toggleMore,
+  loadInitial
 }
 
 // ------------------------------------
@@ -98,7 +115,8 @@ const ACTION_HANDLERS = {
     selectedChoice: "",
     showMoreSentences: false,
     error: false,
-    color: randomColor.getColor()
+    color: randomColor.getColor(),
+    loading: false
   }),
   [TOGGLE_MORE_SENTENCE]: (state, action) => ({
     ...state,
@@ -117,7 +135,7 @@ const ACTION_HANDLERS = {
 // ------------------------------------
 // Reducer
 // ------------------------------------
-const initialState = {...vocabulary.init(), selectedChoice: "", showMoreSentences: false, error: false, color: randomColor.getColor()};
+const initialState = {loading: true, selectedChoice: "", showMoreSentences: false, error: false, color: randomColor.getColor()};
 export default function logInReducer (state = initialState, action) {
   const handler = ACTION_HANDLERS[action.type]
 

@@ -1,5 +1,5 @@
 import { connect } from 'react-redux'
-import { toggleMore, selectIt, nextWord, prevWord } from '../modules/home'
+import { loadInitial, toggleMore, selectIt, nextWord, prevWord } from '../modules/home'
 
 /*  This is a container component. Notice it does not contain any JSX,
     nor does it import React. This component is **only** responsible for
@@ -16,18 +16,20 @@ const mapDispatchToProps = {
     toggleMore,
     selectIt,
     nextWord,
-    prevWord
+    prevWord,
+    loadInitial
 }
 
-const mapStateToProps = (state) => ({
-  word: state.home.word,
-  error: state.home.error,
-  color: state.home.color,
-  sentences: state.home.sentences,
-  showMoreSentences: state.home.showMoreSentences,
-  selectedChoice: state.home.selectedChoice,
-  choices: state.home.choices,
-  answer: state.home.answer,
+const mapStateToProps = ({home}) => ({
+  word: home.word,
+  error: home.error,
+  color: home.color,
+  sentences: home.sentences,
+  showMoreSentences: home.showMoreSentences,
+  selectedChoice: home.selectedChoice,
+  choices: home.choices,
+  answer: home.answer,
+  loading: home.loading
 })
 
 /*  Note: mapStateToProps is where you should use `reselect` to create selectors, ie:
