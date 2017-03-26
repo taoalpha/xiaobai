@@ -12,10 +12,10 @@ export default {
         "He views the term as pejorative, and he is notably skeptical about the value of psychiatric diagnosis in voice-hearing cases:"
       ],
       choices: [
-        {word: "opacity"},
-        {word: "controversal"},
-        {word: "tofu"},
-        {word: "pejorative"}
+        {word: "opacity", def: "the quality of being opaque to a degree; the degree to which something reduces the passage of light"},
+        {word: "notably", def: "especially; in particular"},
+        {word: "tofu", def: "cheeselike food made of curdled soybean milk"},
+        {word: "pejorative", def: "expressing disapproval"}
       ]
     }
     return CURRENT_WORD;
@@ -51,10 +51,10 @@ export default {
         "It’s an environmental catastrophe, and at times an allegory for these rural lives and the modern world."
       ],
       choices: [
-        {word: "allegory"},
-        {word: "environmental"},
-        {word: "diagram"},
-        {word: "entire"}
+        {word: "allegory", def: "a short moral story (often with animal characters)"},
+        {word: "environmental", def: "of or relating to the external conditions or surroundings"},
+        {word: "diagram", def: "a drawing intended to explain how something works; a drawing showing the relation between the parts"},
+        {word: "entire", def: "constituting the full quantity or extent; complete"}
       ]
     }
     cb(CURRENT_WORD);
@@ -70,10 +70,10 @@ export default {
         "Adjunct General David S. Baldwin said at a news conference late Sunday that the helicopters will also be available for search and rescue Monday."
       ],
       choices: [
-        {word: "adjunct"},
-        {word: "industry"},
-        {word: "professor"},
-        {word: "helicopter"}
+        {word: "adjunct", def: "something added to another thing but not an essential part of it"},
+        {word: "industry", def: "the organized action of making of goods and services for sale"},
+        {word: "professor", def: "someone who is a member of the faculty at a college or university"},
+        {word: "helicopter", def: "an aircraft without wings that obtains its lift from the rotation of overhead blades"}
       ]
     }
     cb(CURRENT_WORD);

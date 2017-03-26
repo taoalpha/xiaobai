@@ -1,5 +1,6 @@
 import { browserHistory } from 'react-router'
 import vocabulary from "modules/vocabulary"
+import randomColor from 'random-material-color'
 
 // ------------------------------------
 // Constants
@@ -96,7 +97,8 @@ const ACTION_HANDLERS = {
     ...action.payload,
     selectedChoice: "",
     showMoreSentences: false,
-    error: false
+    error: false,
+    color: randomColor.getColor()
   }),
   [TOGGLE_MORE_SENTENCE]: (state, action) => ({
     ...state,
@@ -108,14 +110,14 @@ const ACTION_HANDLERS = {
   }),
   [RIGHT_OR_WRONG]: (state, action) => ({
     ...state,
-    error: !!action.payload
+    error: !action.payload
   })
 }
 
 // ------------------------------------
 // Reducer
 // ------------------------------------
-const initialState = {...vocabulary.init(), selectedChoice: "", showMoreSentences: false, error: false};
+const initialState = {...vocabulary.init(), selectedChoice: "", showMoreSentences: false, error: false, color: randomColor.getColor()};
 export default function logInReducer (state = initialState, action) {
   const handler = ACTION_HANDLERS[action.type]
 

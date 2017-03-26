@@ -1,5 +1,26 @@
-.card-image.card-content.white-text p {
-  padding: 10px 0;
-  font-size: 15px;
-  line-height: 20px;
+.oneWord {
+  form.choices {
+    padding: 10px 0;
+  }
+  .sentences {
+    padding-bottom: 60px;
+  }
+  .card-title.word-name {
+    padding-bottom: 5px;
+  }
+  p.sentence {
+    padding: 10px 0;
+    font-size: 15px;
+    line-height: 20px;
+  }
+  p.choice label {
+    width: 100%;
+    height: 100%;
+    &.error {
+      color: red;
+    }
+    &.correct {
+      color: green;
+    }
+  }
 }
