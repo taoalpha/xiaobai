@@ -1,4 +1,5 @@
 import React from 'react'
+import renderHTML from 'react-render-html';
 import Card from 'components/Card'
 import Loader from 'components/Loader'
 import './WordCardView.scss'
@@ -10,7 +11,7 @@ const answerCard =  (props) => (
         props.choices.map((choice, i) => (
             <p key={choice.word} className="collection-item choice">
               <input className="with-gap" type="radio" id={"test" + i} onChange={props.selectIt.bind(null, choice.word)} checked={choice.word === props.selectedChoice} />
-              <label htmlFor={"test" + i} className={props.error ? (choice.word === props.word ? "correct" : choice.word === props.selectedChoice ? "error" : "") : ""}>{choice.def}</label>
+              <label htmlFor={"test" + i} className={props.error ? (choice.word === props.word ? "correct" : choice.word === props.selectedChoice ? "error" : "") : ""}>{renderHTML(choice.def)}</label>
             </p>
         ))
       }
@@ -22,7 +23,7 @@ const sentenceCard = (props) => (
   <div key="sentenceContent" className="card-image card-content white-text sentences">
     {
       props.sentences.map((sen, i) => (
-        <p className="sentence" key={i} style={i > 0 && !props.showMoreSentences ? {display: "none"} : {}}>{sen}</p>
+        <p className="sentence" key={i} style={i > 0 && !props.showMoreSentences ? {display: "none"} : {}}>{renderHTML(sen.s)}</p>
       ))
     }
     <span className="card-title word-name">{props.word}</span>

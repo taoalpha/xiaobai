@@ -1,5 +1,29 @@
+import axios from "axios";
+import config from "../config";
+
+// export
 export let CURRENT_WORD = {};
 export const LOCALWORD_STORAGE_KEY = "XIAOBAIYAOBEIDANCI"
+
+// define word node used in WordList
+class WordNode {
+  constructor(word) {
+    /**
+     * @class WordNode
+     * @param {Object} word
+     * @property {String} word.word - the actual word
+     * @property {Array} word.sentences - examples for this word
+     * @property {Array} word.choices - choices generated for this word(contains the actual word), length = 4
+     */
+    Object.assign(this, word);
+    
+    // pointers
+    this.next = this.prev = null;
+
+    // status -> fallback to "new"
+    this.status = this.status || "new";
+  }
+}
 
 /**
  * dataStore structure:
@@ -24,14 +48,44 @@ const Vocabulary = {
     try {
       Vocabulary.generateList(JSON.parse(localWordData), cb);
     } catch (e) {
-      pretendRequest(words => {
-        Vocabulary.generateList(words, cb);
+      getWords(words => {
+        Vocabulary.generateList(words.data, cb);
       });
     }
   },
 
+  cleanDef(defs) {
+    let keys = Object.keys(defs);
+    return `<i>${keys[0]}</i>  ${defs[keys[0]][0]}`;
+  },
+
   generateList(words, cb) {
-    CURRENT_WORD = words[0];
+    // generate an
+    const emptyRoot = new WordNode();
+    let node = emptyRoot;
+    words.forEach((word, i) => {
+      let choices = [];
+      let pickedIds = [];
+      while (choices.length < 3) {
+        let randIdx = Math.floor(Math.random() * words.length);
+        if (!~pickedIds.indexOf(randIdx) && randIdx !== i) {
+          pickedIds.push(randIdx);
+          choices.push({word: words[randIdx].word, def: Vocabulary.cleanDef(words[randIdx].definitions)});
+        }
+      }
+      choices.push({word: word.word, def: Vocabulary.cleanDef(word.definitions)});
+      let wordNode = new WordNode({
+        word: word.word,
+        sentences: word.sentences,
+        choices
+      });
+      wordNode.prev = node;
+      node.next = wordNode;
+      node = wordNode;
+    })
+
+    CURRENT_WORD = emptyRoot.next;
+    console.log(CURRENT_WORD);
     if (cb) cb(CURRENT_WORD)
   },
   
@@ -57,41 +111,23 @@ const Vocabulary = {
   },
 
   next(cb) {
-    // return a new word object
-    CURRENT_WORD = {
-      word: "allegory",
-      sentences: [
-        "It’s hard to diagram the Kaweah story as an allegory of any contemporary ideology of good and evil, heroism and villainy.",
-        "Like the easy allegory of the entire asylum-limbo story line, it’s a case of infatuation with form impeding function.",
-        "It’s an environmental catastrophe, and at times an allegory for these rural lives and the modern world."
-      ],
-      choices: [
-        {word: "allegory", def: "a short moral story (often with animal characters)"},
-        {word: "environmental", def: "of or relating to the external conditions or surroundings"},
-        {word: "diagram", def: "a drawing intended to explain how something works; a drawing showing the relation between the parts"},
-        {word: "entire", def: "constituting the full quantity or extent; complete"}
-      ]
+    // return previous word object
+    if (CURRENT_WORD.next) {
+      CURRENT_WORD = CURRENT_WORD.next;
+      cb(CURRENT_WORD)
+    } else {
+      cb(CURRENT_WORD);
     }
-    cb(CURRENT_WORD);
   },
 
   previous(cb) {
     // return previous word object
-    CURRENT_WORD = {
-      word: "adjunct",
-      sentences: [
-        "Except for four full-time professors, the instructors are adjunct and are very active in the industry.",
-        "She was hired Wednesday as an adjunct English professor at Widener University.",
-        "Adjunct General David S. Baldwin said at a news conference late Sunday that the helicopters will also be available for search and rescue Monday."
-      ],
-      choices: [
-        {word: "adjunct", def: "something added to another thing but not an essential part of it"},
-        {word: "industry", def: "the organized action of making of goods and services for sale"},
-        {word: "professor", def: "someone who is a member of the faculty at a college or university"},
-        {word: "helicopter", def: "an aircraft without wings that obtains its lift from the rotation of overhead blades"}
-      ]
+    if (CURRENT_WORD.prev) {
+      CURRENT_WORD = CURRENT_WORD.prev;
+      cb(CURRENT_WORD)
+    } else {
+      cb(CURRENT_WORD);
     }
-    cb(CURRENT_WORD);
   },
 
   finish() {
@@ -99,11 +135,21 @@ const Vocabulary = {
   }
 }
 
-function pretendRequest(cb) {
+function getWords(cb) {
+  axios.get(config.api + "/words/")
+    .then(cb)
+    .catch(err => {
+      console.log(err);
+    });
+}
+
+
+function pretendRequest(word, cb) {
   setTimeout(() => {
     cb([
       {
         word: "pejorative",
+        def: "expressing disapproval",
         sentences: [
           "After Reagan, the word “liberal” became a pejorative.",
           "Elsewhere, it seems elitist; exclusive in its most pejorative sense.",
