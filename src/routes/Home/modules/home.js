@@ -15,45 +15,39 @@ export const RIGHT_OR_WRONG = 'RIGHT_OR_WRONG'
 // ------------------------------------
 export const loadInitial = () => {
   return (dispatch) => {
-    return new Promise((resolve) => {
-      vocabulary.init(word => {
+    return vocabulary.init()
+      .then(word => {
         dispatch({
           type    : WORD_CHNAGE,
           payload : word 
         })
-        resolve()
-      })
-    })
+      });
   }
 }
 
 export const nextWord = (e) => {
   e.preventDefault();
   return (dispatch) => {
-    return new Promise((resolve) => {
-      vocabulary.next(word => {
+    return vocabulary.next()
+      .then(word => {
         dispatch({
           type    : WORD_CHNAGE,
           payload : word 
         })
-        resolve()
-      })
-    })
+      });
   }
 }
 
 export const prevWord = (e) => {
   e.preventDefault();
   return (dispatch) => {
-    return new Promise((resolve) => {
-      vocabulary.previous(word => {
+    return vocabulary.previous()
+      .then(word => {
         dispatch({
           type    : WORD_CHNAGE,
           payload : word 
         })
-        resolve()
-      })
-    })
+      });
   }
 }
 
@@ -71,28 +65,15 @@ export const selectIt = (word) => {
     dispatch({
       type    : SELECT_CHOICE,
       payload : word
-    })
+    });
 
-    let answer = vocabulary.curWord().word;
-
-    dispatch({
-      type    : RIGHT_OR_WRONG,
-      payload : word === answer
-    })
-
-    // if chose wrong answer
-    if (word !== answer) return;
-
-    // else, ready to go to next word
-    return new Promise((resolve) => {
-      vocabulary.next(word => {
+    return vocabulary.curWord()
+      .then(answer => {
         dispatch({
-          type    : WORD_CHNAGE,
-          payload : word 
-        })
-        resolve()
-      })
-    })
+          type    : RIGHT_OR_WRONG,
+          payload : word === answer
+        });
+      });
   }
 }
 

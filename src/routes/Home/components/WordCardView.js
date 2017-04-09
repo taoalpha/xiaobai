@@ -27,7 +27,9 @@ const sentenceCard = (props) => (
       ))
     }
     <span className="card-title word-name">{props.word}</span>
-    <a onClick={props.toggleMore} className="btn-floating halfway-fab waves-effect waves-light red"><i className="material-icons">{props.showMoreSentences ? "expand_less" : "expand_more"}</i></a>
+    {
+      props.sentences.length > 1 && (<a onClick={props.toggleMore} className="btn-floating halfway-fab waves-effect waves-light red"><i className="material-icons">{props.showMoreSentences ? "expand_less" : "expand_more"}</i></a>)
+    }
   </div>
 )
 
@@ -41,6 +43,7 @@ const cardAction =  (props) => (
 
 const WordCardView = (props) => {
   if (props.loading) {
+    console.log("loading more");
     props.loadInitial();
     return (
       <div className="row">

@@ -3,8 +3,20 @@ import ReactDOM from 'react-dom'
 import createStore from './store/createStore'
 import AppContainer from './containers/AppContainer'
 
-import 'materialize-css/bin/materialize.js'
+// import 'materialize-css/bin/materialize.js'
 import 'materialize-css/bin/materialize.css'
+
+window.jQuery = require('jquery');
+require('materialize-css/js/initial');
+require('materialize-css/js/jquery.easing.1.3');
+require('materialize-css/js/animation');
+window.Vel = require('materialize-css/js/velocity.min');
+require('materialize-css/js/hammer.min');
+require('materialize-css/js/jquery.hammer');
+require('materialize-css/js/global');
+
+require('materialize-css/js/toasts');
+
 // ========================================================
 // Store Instantiation
 // ========================================================

@@ -5,6 +5,8 @@ import config from "../config";
 export let CURRENT_WORD = {};
 export const LOCALWORD_STORAGE_KEY = "XIAOBAIYAOBEIDANCI"
 
+const MAX_RETRY = 5;
+
 // define word node used in WordList
 class WordNode {
   constructor(word) {
@@ -39,28 +41,28 @@ class WordNode {
  *    - if true: level up its status, mark current timestamp
  *    - if false: level down its status, move 
  */
+const getWords = () => axios.get(config.api + "/words/");
 
+
+// always return a promise
 const Vocabulary = {
-  init(cb) {
+  init() {
     // fetch a bunch
     // return one word to start (words[0])
     const localWordData = localStorage.getItem(LOCALWORD_STORAGE_KEY);
-    try {
-      Vocabulary.generateList(JSON.parse(localWordData), cb);
-    } catch (e) {
-      getWords(words => {
-        Vocabulary.generateList(words.data, cb);
-      });
-    }
+    let p = Promise.resolve();
+    return p.then(() => Vocabulary.generateList(JSON.parse(localWordData)))
+            .catch(e => getWords())
+            .then(words => Vocabulary.generateList(words.data))
+            .catch(e => null)
   },
 
   cleanDef(defs) {
     let keys = Object.keys(defs);
-    return `<i>${keys[0]}</i>  ${defs[keys[0]][0]}`;
+    return `<i>${keys[0]}</i>;  ${defs[keys[0]][0]}`;
   },
 
-  generateList(words, cb) {
-    // generate an
+  generateList(words) {
     const emptyRoot = new WordNode();
     let node = emptyRoot;
     words.forEach((word, i) => {
@@ -85,12 +87,11 @@ const Vocabulary = {
     })
 
     CURRENT_WORD = emptyRoot.next;
-    console.log(CURRENT_WORD);
-    if (cb) cb(CURRENT_WORD)
+    return Promise.resolve(CURRENT_WORD);
   },
   
   curWord() {
-    return CURRENT_WORD;
+    return Promise.resolve(CURRENT_WORD);
   },
 
   mark(word, right) {
@@ -110,60 +111,17 @@ const Vocabulary = {
     // return word def/sentences... everything
   },
 
-  next(cb) {
+  next() {
     // return previous word object
-    if (CURRENT_WORD.next) {
-      CURRENT_WORD = CURRENT_WORD.next;
-      cb(CURRENT_WORD)
-    } else {
-      cb(CURRENT_WORD);
-    }
+    if (CURRENT_WORD.next) CURRENT_WORD = CURRENT_WORD.next;
+    return Promise.resolve(CURRENT_WORD);
   },
 
-  previous(cb) {
+  previous() {
     // return previous word object
-    if (CURRENT_WORD.prev) {
-      CURRENT_WORD = CURRENT_WORD.prev;
-      cb(CURRENT_WORD)
-    } else {
-      cb(CURRENT_WORD);
-    }
-  },
-
-  finish() {
-    // finish this time
+    if (CURRENT_WORD.prev) CURRENT_WORD = CURRENT_WORD.prev;
+    return Promise.resolve(CURRENT_WORD);
   }
-}
-
-function getWords(cb) {
-  axios.get(config.api + "/words/")
-    .then(cb)
-    .catch(err => {
-      console.log(err);
-    });
-}
-
-
-function pretendRequest(word, cb) {
-  setTimeout(() => {
-    cb([
-      {
-        word: "pejorative",
-        def: "expressing disapproval",
-        sentences: [
-          "After Reagan, the word “liberal” became a pejorative.",
-          "Elsewhere, it seems elitist; exclusive in its most pejorative sense.",
-          "He views the term as pejorative, and he is notably skeptical about the value of psychiatric diagnosis in voice-hearing cases:"
-        ],
-        choices: [
-          {word: "opacity", def: "the quality of being opaque to a degree; the degree to which something reduces the passage of light"},
-          {word: "notably", def: "especially; in particular"},
-          {word: "tofu", def: "cheeselike food made of curdled soybean milk"},
-          {word: "pejorative", def: "expressing disapproval"}
-        ]
-      }
-    ])
-  }, 3000)
-}
+};
 
 export default Vocabulary
