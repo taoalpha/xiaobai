@@ -43,7 +43,6 @@ const cardAction =  (props) => (
 
 const WordCardView = (props) => {
   if (props.loading) {
-    console.log("loading more");
     props.loadInitial();
     return (
       <div className="row">

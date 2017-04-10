@@ -1,6 +1,8 @@
 import { browserHistory } from 'react-router'
-import vocabulary from "modules/vocabulary"
+import Vocabulary from "modules/vocabulary"
 import randomColor from 'random-material-color'
+
+const voc = new Vocabulary();
 
 // ------------------------------------
 // Constants
@@ -15,7 +17,7 @@ export const RIGHT_OR_WRONG = 'RIGHT_OR_WRONG'
 // ------------------------------------
 export const loadInitial = () => {
   return (dispatch) => {
-    return vocabulary.init()
+    return voc.init()
       .then(word => {
         dispatch({
           type    : WORD_CHNAGE,
@@ -28,7 +30,7 @@ export const loadInitial = () => {
 export const nextWord = (e) => {
   e.preventDefault();
   return (dispatch) => {
-    return vocabulary.next()
+    return voc.next()
       .then(word => {
         dispatch({
           type    : WORD_CHNAGE,
@@ -41,7 +43,7 @@ export const nextWord = (e) => {
 export const prevWord = (e) => {
   e.preventDefault();
   return (dispatch) => {
-    return vocabulary.previous()
+    return voc.previous()
       .then(word => {
         dispatch({
           type    : WORD_CHNAGE,
@@ -67,8 +69,9 @@ export const selectIt = (word) => {
       payload : word
     });
 
-    return vocabulary.curWord()
+    return voc.curWord()
       .then(answer => {
+        voc.mark(word, word === answer);
         dispatch({
           type    : RIGHT_OR_WRONG,
           payload : word === answer
