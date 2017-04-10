@@ -71,10 +71,10 @@ export const selectIt = (word) => {
 
     return voc.curWord()
       .then(answer => {
-        voc.mark(word, word === answer);
+        voc.mark(word, word === answer.word);
         dispatch({
           type    : RIGHT_OR_WRONG,
-          payload : word === answer
+          payload : word === answer.word
         });
       });
   }

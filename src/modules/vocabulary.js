@@ -111,7 +111,7 @@ class Vocabulary {
       })
 
       // update remembered field for the user
-      axios.patch(`${config.api}/user/${config.username}`, {remembered: updates}).then(() => this.remove(updates));
+      axios.patch(`${config.api}/users/${config.username}`, {remembered: updates}).then(() => this.remove(updates));
     }, this.SYNC_DEBOUNCE, immediate);
   }
 
@@ -219,7 +219,7 @@ class Vocabulary {
 
   next() {
       // return previous word object
-    if (this.URRENT_WORD.next) this.CURRENT_WORD = this.CURRENT_WORD.next;
+    if (this.CURRENT_WORD.next) this.CURRENT_WORD = this.CURRENT_WORD.next;
     this.record();
     return Promise.resolve(this.CURRENT_WORD);
   }
@@ -232,9 +232,9 @@ class Vocabulary {
   }
   mark(word, right) {
     // mark word as wrong or correct
-    if (right) WORD_NODE_MAP[word].status++;
-    if (wrong) WORD_NODE_MAP[word].status--;
-    WORD_NODE_MAP[word].status = Math.max(WORD_NODE_MAP[word].status, 0);
+    if (right) this.WORD_NODE_MAP[word].status++;
+    else this.WORD_NODE_MAP[word].status--;
+    this.WORD_NODE_MAP[word].status = Math.max(this.WORD_NODE_MAP[word].status, 0);
     this.sync();
   }
 }
