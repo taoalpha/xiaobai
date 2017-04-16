@@ -23,16 +23,17 @@ class WordNode {
     //  3 --- candidate
     //  4 --- finished
     this.status = this.status || 0;
-    this.sync = false;  // already sync with server or not
+    this.synced = false;  // already sync with server or not
   }
 
+  // this is used when we need a 
   toJSON() {
     return {
       word: this.word,
       sentences: this.sentences,
       choices: this.choices,
       status: this.status,
-      sync: this.sync
+      synced: this.synced
     }
   }
 
@@ -42,7 +43,7 @@ class WordNode {
       sentences: this.sentences,
       choices: this.choices,
       status: this.status,
-      sync: this.sync
+      synced: this.synced
     })
   }
 }
@@ -80,10 +81,9 @@ class Vocabulary {
   _record(immediate) {
     return this.debounce(() => {
       localStorage.setItem("CURRENT_WORD", this.CURRENT_WORD.word);
-      let data = {};
-      Object.keys(this.WORD_NODE_MAP).forEach(word => {
-        data[word] = this.WORD_NODE_MAP[word].toJSON();
-      })
+      let data = Object.keys(this.WORD_NODE_MAP).map(word => {
+        return this.WORD_NODE_MAP[word].toJSON();
+      });
       localStorage.setItem(this.LOCALWORD_STORAGE_KEY, JSON.stringify(data));
     }, this.LOCAL_DEBOUNCE, immediate);
   }
@@ -106,8 +106,9 @@ class Vocabulary {
   _sync(immediate) {
     return this.debounce(() => {
       let updates = [];
-      Object.keys(this.WORD_NODE_MAP).forEach(wn => {
-        if (wn.staus >= 4) updates.push(wn.word);
+      Object.keys(this.WORD_NODE_MAP).forEach(w => {
+        let wn = this.WORD_NODE_MAP[w];
+        if (wn.status >= 4) updates.push(wn.word);
       })
 
       // update remembered field for the user
@@ -123,12 +124,16 @@ class Vocabulary {
         let temp = wn.prev;
         if (wn.prev) wn.prev.next = wn.next;
         if (wn.next) wn.next.prev = temp;
+        wn.synced = true;
       }
     })
+    this.record();
   }
 
   // http request (axios should forward to fetch if browser supported)
   getWords(batch) {
+    // probably need a retry, just in case the server does not return the words back(it happens several time, not sure why)
+    // TODO: figure out why server sometimes return empty words list back
     return axios.get(config.api + "/words/?batch=" + batch);
   }
 
@@ -138,7 +143,7 @@ class Vocabulary {
     return new Promise((resolve, reject) => {
           try {
             let local = JSON.parse(localStorage.getItem(this.LOCALWORD_STORAGE_KEY));
-            if (local) resolve(this.recoverFromLocal(local));
+            if (local) resolve(this.constructList(local));
             reject("Null Data");
           } catch(e) {
             reject(e);
@@ -150,23 +155,21 @@ class Vocabulary {
         });
   }
 
+  // call to get more, use regular BATCH_NUMBER directly
+  // when load more, need to add words returned to current WordNode list
+  // handle error inside, no need to return anything, maybe indicate if there is error
   loadMore() {
     return Promise.resolve()
-      .thne(() => getWords(this.BATCH_NUMBER).then(words => this.generateList(words.data)))
-      .catch(e => {
-        return this.CURRENT_WORD;
-      })
+      .then(() => getWords(this.BATCH_NUMBER).then(words => this.generateList(words.data)));
   }
 
   cleanDef(defs) {
     let keys = Object.keys(defs);
-    return `<i>${keys[0]}</i>;  ${defs[keys[0]][0]}`;
+    return `<strong><i>${keys[0]}</i></strong>;  ${defs[keys[0]][0]}`;
   }
 
   generateList(words) {
-    const emptyRoot = new WordNode();
-    let node = [emptyRoot];
-    words.forEach((word, i) => {
+    let data = words.map((word, i) => {
       let choices = [];
       let pickedIds = [];
       while (choices.length < 3) {
@@ -177,46 +180,45 @@ class Vocabulary {
         }
       }
       choices.push({word: word.word, def: this.cleanDef(word.definitions)});
-      this.constructList({
+      return {
         word: word.word,
         sentences: word.sentences,
         choices
-      }, node);
-    })
-
-    this.CURRENT_WORD = emptyRoot.next;
-    this._record(true)(); // sync local immediately
-
-    return Promise.resolve(this.CURRENT_WORD);
-  }
-
-  recoverFromLocal(localData) {
-    const emptyRoot = new WordNode();
-    let node = [emptyRoot];
-    Object.keys(localData).forEach(word => {
-      this.constructList(localData[word], node);
+      };
     });
 
+    return this.constructList(data);
+  }
+
+  constructList(data) {
+    const emptyRoot = new WordNode();
+    let node = emptyRoot;
+    data.filter(word => !word.synced).forEach(word => {
+      let wordNode = new WordNode(word);
+      wordNode.prev = node;
+      node.next = wordNode;
+      node = wordNode;
+
+      // store into our map
+      this.WORD_NODE_MAP[word.word] = wordNode;
+    });
+ 
     this.CURRENT_WORD = emptyRoot.next;
     this._record(true)(); // sync local immediately
-    
+
     return Promise.resolve(this.CURRENT_WORD);
   }
 
-  constructList(word, node) {
-    let wordNode = new WordNode(word);
-    wordNode.prev = node[0];
-    node[0].next = wordNode;
-    node[0] = wordNode;
-
-    // store into our map
-    this.WORD_NODE_MAP[word.word] = wordNode;
-  }
-
+  // always return current word node
+  // will be auto updated for every call on previous / next
   curWord() {
     return Promise.resolve(this.CURRENT_WORD);
   }
 
+  // return a promise resolve with next word node on the list, if no next one, no change
+  // if curIndex is greater than 0.75 * total, load more to the node list
+  // update current word node
+  // TODO: if no next node, reject with the message: "No More Words."
   next() {
       // return previous word object
     if (this.CURRENT_WORD.next) this.CURRENT_WORD = this.CURRENT_WORD.next;
@@ -224,14 +226,19 @@ class Vocabulary {
     return Promise.resolve(this.CURRENT_WORD);
   }
 
+  // return a promise resolve with previous word node on the list
+  // the root node is an empty node, check it before update
+  // TODO: if no next node, reject with the message: "Already the first word."
   previous() {
     // return previous word object
     if (this.CURRENT_WORD.prev && this.CURRENT_WORD.prev.word) this.CURRENT_WORD = this.CURRENT_WORD.prev;
     this.record();
     return Promise.resolve(this.CURRENT_WORD);
   }
+
+  // mark word as wrong or correct
+  // if word not exists, report to server the error(should not happen unless it is removed since remembered but still somehow is the current word node)
   mark(word, right) {
-    // mark word as wrong or correct
     if (right) this.WORD_NODE_MAP[word].status++;
     else this.WORD_NODE_MAP[word].status--;
     this.WORD_NODE_MAP[word].status = Math.max(this.WORD_NODE_MAP[word].status, 0);

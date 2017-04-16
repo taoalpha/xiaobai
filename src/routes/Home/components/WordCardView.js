@@ -11,7 +11,7 @@ const answerCard =  (props) => (
         props.choices.map((choice, i) => (
             <p key={choice.word} className="collection-item choice">
               <input className="with-gap" type="radio" id={"test" + i} onChange={props.selectIt.bind(null, choice.word)} checked={choice.word === props.selectedChoice} />
-              <label htmlFor={"test" + i} className={props.error ? (choice.word === props.word ? "correct" : choice.word === props.selectedChoice ? "error" : "") : ""}>{renderHTML(choice.def)}</label>
+              <label htmlFor={"test" + i} className={props.error !== undefined ? (choice.word === props.word ? "correct" : choice.word === props.selectedChoice ? "error" : "") : ""}>{renderHTML(choice.def)}</label>
             </p>
         ))
       }

@@ -98,7 +98,7 @@ const ACTION_HANDLERS = {
     ...action.payload,
     selectedChoice: "",
     showMoreSentences: false,
-    error: false,
+    error: undefined,
     color: (colorStore[action.payload.word] = colorStore[action.payload.word] ? colorStore[action.payload.word] : randomColor.getColor()),
     loading: false
   }),
@@ -120,7 +120,7 @@ const ACTION_HANDLERS = {
 // Reducer
 // ------------------------------------
 const colorStore = {};  // store all colors for every card
-const initialState = {loading: true, selectedChoice: "", showMoreSentences: false, error: false};
+const initialState = {loading: true, selectedChoice: "", showMoreSentences: false, error: undefined};
 export default function logInReducer (state = initialState, action) {
   const handler = ACTION_HANDLERS[action.type]
 
