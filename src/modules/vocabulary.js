@@ -78,6 +78,7 @@ class Vocabulary {
       SYNC_DEBOUNCE: 20 * 1000,   // Sync debounce
       LOCAL_DEBOUNCE: 5 * 1000,   // local storage sync debounce
       GROWTH_FACTOR: 0.75,  // load more when reach the threshold
+      WORD_COMPLETE_STATUS: 4, // status greater than this will indicate that the word is remembered
     }, options);
 
     // debounced methods
@@ -119,7 +120,7 @@ class Vocabulary {
       let updates = [];
       Object.keys(this.WORD_NODE_MAP).forEach(w => {
         let wn = this.WORD_NODE_MAP[w];
-        if (wn.status >= 1) updates.push(wn.word);
+        if (wn.status >= this.WORD_COMPLETE_STATUS) updates.push(wn.word);
       })
 
       // update remembered field for the user
