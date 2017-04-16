@@ -26,6 +26,10 @@ class WordNode {
     this.synced = false;  // already sync with server or not
   }
 
+  isEmpty() {
+    return !this.word;
+  }
+
   // this is used when we need a 
   toJSON() {
     return {
@@ -66,16 +70,23 @@ class Vocabulary {
   constructor(options = {}) {
     // merge in options and default options
     Object.assign(this, {
-      CURRENT_WORD: {}, // always pointing to current word node
+      CURRENT_WORD: new WordNode(), // always pointing to current word node
+      LAST_WORD: new WordNode(),
       LOCALWORD_STORAGE_KEY: "XIAOBAIYAOBEIDANCI", // storage key
       WORD_NODE_MAP: Object.create(null),  // data store for our word nodes
-      BATCH_NUMBE: 50,  // regular number of words should be contained in one batch
+      BATCH_NUMBER: 10,  // regular number of words should be contained in one batch
       SYNC_DEBOUNCE: 20 * 1000,   // Sync debounce
       LOCAL_DEBOUNCE: 5 * 1000,   // local storage sync debounce
+      GROWTH_FACTOR: 0.75,  // load more when reach the threshold
     }, options);
 
+    // debounced methods
     this.sync = this._sync();
     this.record = this._record();
+
+    // start index: 0
+    this.index = 0;
+    this.total = 0;
   }
 
   _record(immediate) {
@@ -108,7 +119,7 @@ class Vocabulary {
       let updates = [];
       Object.keys(this.WORD_NODE_MAP).forEach(w => {
         let wn = this.WORD_NODE_MAP[w];
-        if (wn.status >= 4) updates.push(wn.word);
+        if (wn.status >= 1) updates.push(wn.word);
       })
 
       // update remembered field for the user
@@ -143,8 +154,11 @@ class Vocabulary {
     return new Promise((resolve, reject) => {
           try {
             let local = JSON.parse(localStorage.getItem(this.LOCALWORD_STORAGE_KEY));
-            if (local) resolve(this.constructList(local));
-            reject("Null Data");
+            if (local) {
+              resolve(this.addToList(local));
+            } else {
+              reject("Null Data");
+            }
           } catch(e) {
             reject(e);
           }
@@ -160,7 +174,7 @@ class Vocabulary {
   // handle error inside, no need to return anything, maybe indicate if there is error
   loadMore() {
     return Promise.resolve()
-      .then(() => getWords(this.BATCH_NUMBER).then(words => this.generateList(words.data)));
+      .then(() => this.getWords(this.BATCH_NUMBER).then(words => this.generateList(words.data)));
   }
 
   cleanDef(defs) {
@@ -187,13 +201,16 @@ class Vocabulary {
       };
     });
 
-    return this.constructList(data);
+    return this.addToList(data);
   }
 
-  constructList(data) {
-    const emptyRoot = new WordNode();
-    let node = emptyRoot;
-    data.filter(word => !word.synced).forEach(word => {
+  // build and add node to our list
+  //   - from init
+  //   - from load more
+  addToList(data) {
+    let node = this.LAST_WORD;
+    data.forEach(word => {
+      if (word.synced) return;
       let wordNode = new WordNode(word);
       wordNode.prev = node;
       node.next = wordNode;
@@ -201,10 +218,17 @@ class Vocabulary {
 
       // store into our map
       this.WORD_NODE_MAP[word.word] = wordNode;
+      this.total++; // update total number of words we need to remember
     });
- 
-    this.CURRENT_WORD = emptyRoot.next;
-    this._record(true)(); // sync local immediately
+
+    // if first load, or no current word, use first word of this batch
+    if (this.LAST_WORD.isEmpty() || this.CURRENT_WORD.isEmpty()) {
+      this.CURRENT_WORD = this.LAST_WORD.next;
+    }
+
+    // update last node pointer
+    this.LAST_WORD = node;
+    this._record(true)(); // sync local immediatel
 
     return Promise.resolve(this.CURRENT_WORD);
   }
@@ -221,8 +245,15 @@ class Vocabulary {
   // TODO: if no next node, reject with the message: "No More Words."
   next() {
       // return previous word object
-    if (this.CURRENT_WORD.next) this.CURRENT_WORD = this.CURRENT_WORD.next;
+    if (this.CURRENT_WORD.next) {
+      this.CURRENT_WORD = this.CURRENT_WORD.next;
+      this.index++;
+
+      // load more if reach the threshold
+      if ((this.index / this.total) >= this.GROWTH_FACTOR) this.loadMore();
+    }
     this.record();
+
     return Promise.resolve(this.CURRENT_WORD);
   }
 
@@ -231,8 +262,12 @@ class Vocabulary {
   // TODO: if no next node, reject with the message: "Already the first word."
   previous() {
     // return previous word object
-    if (this.CURRENT_WORD.prev && this.CURRENT_WORD.prev.word) this.CURRENT_WORD = this.CURRENT_WORD.prev;
+    if (this.CURRENT_WORD.prev && this.CURRENT_WORD.prev.word) {
+      this.CURRENT_WORD = this.CURRENT_WORD.prev;
+      this.index--;
+    }
     this.record();
+    
     return Promise.resolve(this.CURRENT_WORD);
   }
 
